@@ -1,45 +1,53 @@
 import 'dotenv/config';
 import { REST, Routes } from 'discord.js';
-import { promises as fs } from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+// Function to register commands
+async function InstallGlobalCommands(appId, commands) {
+  const rest = new REST({ version: '10' }).setToken(process.env.DISCORD_TOKEN);
 
-export default async function registerCommands() {
-    const commands = [];
-    // Grab all the command files from the commands directory you created earlier
-    const commandsPath = path.join(__dirname, 'commands');
-    const commandFiles = (await fs.readdir(commandsPath)).filter(file => file.endsWith('.js'));
+  try {
+    console.log('Started refreshing application (/) commands.');
 
-    // Grab the SlashCommandBuilder#toJSON() output of each command's data for deployment
-    for (const file of commandFiles) {
-        const filePath = path.join(commandsPath, file);
-        const command = await import(filePath);
-        if ('data' in command && 'execute' in command) {
-            commands.push(command.data.toJSON());
-        } else {
-            console.log(`[WARNING] The command at ${filePath} is missing a required "data" or "execute" property.`);
-        }
-    }
+    await rest.put(
+      Routes.applicationCommands(appId),
+      { body: commands },
+    );
 
-    // Construct and prepare an instance of the REST module
-    const rest = new REST().setToken(process.env.DISCORD_TOKEN);
-
-    // and deploy your commands!
-    try {
-        console.log(`Started refreshing ${commands.length} application (/) commands.`);
-
-        // The put method is used to fully refresh all commands in the guild with the current set
-        const data = await rest.put(
-            Routes.applicationCommands(process.env.APP_ID),
-            { body: commands },
-        );
-
-        console.log(`Successfully reloaded ${data.length} application (/) commands.`);
-    } catch (error) {
-        // And of course, make sure you catch and log any errors!
-        console.error(error);
-    }
+    console.log('Successfully reloaded application (/) commands.');
+  } catch (error) {
+    console.error(error);
+  }
 }
+
+const SETUP_COMMAND = {
+  name: 'setup',
+  type: 1,
+  description: 'Enter your Hack Club Mail API key.',
+  options: [
+    {
+      type: 3,
+      name: 'api-key',
+      description: 'Your API key from mail.hackclub.com/my/api_keys',
+      required: true,
+    },
+  ],
+  integration_types: [1],
+  contexts: [0, 1, 2],
+};
+
+const MAIL_COMMAND = {
+  name: 'mail',
+  type: 1,
+  description: 'Check your Hack Club mail.',
+  options: [],
+  integration_types: [1],
+  contexts: [0, 1, 2],
+};
+
+const ALL_COMMANDS = [
+  SETUP_COMMAND,
+  MAIL_COMMAND,
+];
+
+// Call the command registration function
+InstallGlobalCommands(process.env.APP_ID, ALL_COMMANDS);

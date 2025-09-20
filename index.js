@@ -4,14 +4,18 @@ import { promises as fs } from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import pool from './db.js';
-import registerCommands from './register.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-(async () => {
-    await registerCommands();
-})();
+try {
+        console.log('Running register.js to update commands...');
+        await import('./register.js');
+        console.log('register.js completed successfully.');
+    } catch (error) {
+        console.error('CRITICAL: Error running register.js. The bot will not start.', error);
+        process.exit(1);
+    }
 
 const client = new Client({ intents: [GatewayIntentBits.Guilds] });
 

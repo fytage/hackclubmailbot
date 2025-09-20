@@ -5,7 +5,7 @@ export const data = new SlashCommandBuilder()
     .setDescription('Enter your Hack Club Mail API key.')
     .addStringOption(option =>
         option.setName('api-key')
-            .setDescription('Your API key from https://mail.hackclub.com/api/k')
+            .setDescription('Your API key from https://mail.hackclub.com/my/api_keys')
             .setRequired(true));
 
 export async function execute(interaction, pool) {
