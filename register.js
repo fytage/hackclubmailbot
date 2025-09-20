@@ -35,10 +35,19 @@ const SETUP_COMMAND = {
   contexts: [0, 1, 2],
 };
 
-const MAIL_COMMAND = {
-  name: 'mail',
+const LETTERS_COMMAND = {
+  name: 'letters',
   type: 1,
-  description: 'Check your Hack Club mail.',
+  description: 'Check your Hack Club letters.',
+  options: [],
+  integration_types: [1],
+  contexts: [0, 1, 2],
+};
+
+const PACKAGES_COMMAND = {
+  name: 'packages',
+  type: 1,
+  description: 'Check your Hack Club packages.',
   options: [],
   integration_types: [1],
   contexts: [0, 1, 2],
@@ -46,7 +55,8 @@ const MAIL_COMMAND = {
 
 const ALL_COMMANDS = [
   SETUP_COMMAND,
-  MAIL_COMMAND,
+  LETTERS_COMMAND,
+  PACKAGES_COMMAND,
 ];
 
 // Call the command registration function
