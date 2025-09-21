@@ -13,7 +13,7 @@ export async function execute(interaction, pool) {
 
         if (rows.length === 0) {
             return interaction.reply({
-                content: 'You have not set up your API key yet. Please use the /setup command.',
+                content: '<:orphmoji_yippee:1419235231315001414> You have not set up your API key yet. Please use the /setup command.',
                 ephemeral: true,
             });
         }
@@ -31,7 +31,7 @@ export async function execute(interaction, pool) {
         if (!mailResponse.ok) {
             if (mailResponse.status === 401) {
                 return interaction.editReply({
-                    content: 'Your API key is invalid. Please set it again with /setup.',
+                    content: '<:orphmoji_scared:1419238538653728808> Your API key is invalid. Please set it again with /setup.',
                 });
             }
             throw new Error(`API request failed with status ${mailResponse.status}`);
@@ -56,9 +56,10 @@ export async function execute(interaction, pool) {
             const currentItems = letters.slice(start, end);
 
             const embed = new EmbedBuilder()
-                .setTitle('Your Hack Club Letters')
+                .setTitle('✉️ Your Hack Club Letters')
                 .setColor(0xec3750)
-                .setFooter({ text: `Page ${page + 1} of ${totalPages} | Showing ${currentItems.length} of ${letters.length} letters.` });
+                .setFooter({ text: `Page ${page + 1} of ${totalPages} | Showing ${currentItems.length} of ${letters.length} letters.` })
+                .setThumbnail('https://em-content.zobj.net/source/apple/419/envelope_2709-fe0f.png');
 
             const selectMenu = new StringSelectMenuBuilder()
                 .setCustomId('select_letter')
@@ -67,8 +68,9 @@ export async function execute(interaction, pool) {
                     label: item.title || 'Untitled',
                     description: `Status: ${item.status}`,
                     value: item.id,
+                    emoji: '✉️',
                 })));
-            
+
             currentItems.forEach(item => {
                 embed.addFields({
                     name: item.title || 'Untitled',
@@ -82,12 +84,14 @@ export async function execute(interaction, pool) {
                 .addComponents(
                     new ButtonBuilder()
                         .setCustomId('prev_page')
-                        .setLabel('Previous')
+                        .setLabel('')
+                        .setEmoji('⬅️')
                         .setStyle(ButtonStyle.Primary)
                         .setDisabled(page === 0),
                     new ButtonBuilder()
                         .setCustomId('next_page')
-                        .setLabel('Next')
+                        .setLabel('')
+                        .setEmoji('➡️')
                         .setStyle(ButtonStyle.Primary)
                         .setDisabled(page >= totalPages - 1)
                 );
@@ -128,7 +132,7 @@ export async function execute(interaction, pool) {
                 });
 
                 if (!letterResponse.ok) {
-                    await i.followUp({ content: 'Failed to fetch letter details.', ephemeral: true });
+                    await i.followUp({ content: '<:orphmoji_peefest:1419239875894579311> Failed to fetch letter details.', ephemeral: true });
                     return;
                 }
 
@@ -150,7 +154,7 @@ export async function execute(interaction, pool) {
 
             } catch (error) {
                 console.error('Failed to fetch letter details:', error);
-                await i.followUp({ content: 'An error occurred while fetching letter details.', ephemeral: true });
+                await i.followUp({ content: '<:orphmoji_peefest:1419239875894579311> An error occurred while fetching letter details.', ephemeral: true });
             }
         });
 
@@ -165,7 +169,7 @@ export async function execute(interaction, pool) {
     } catch (error) {
         console.error(error);
         await interaction.editReply({
-            content: 'An error occurred while fetching your mail.',
+            content: '<:orphmoji_peefest:1419239875894579311> An error occurred while fetching your mail.',
         });
     }
 }

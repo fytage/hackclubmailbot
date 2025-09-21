@@ -13,7 +13,7 @@ export async function execute(interaction, pool) {
 
         if (rows.length === 0) {
             return interaction.reply({
-                content: 'You have not set up your API key yet. Please use the /setup command.',
+                content: '<:orphmoji_yippee:1419235231315001414> You have not set up your API key yet. Please use the /setup command.',
                 ephemeral: true,
             });
         }
@@ -31,7 +31,7 @@ export async function execute(interaction, pool) {
         if (!mailResponse.ok) {
             if (mailResponse.status === 401) {
                 return interaction.editReply({
-                    content: 'Your API key is invalid. Please set it again with /setup.',
+                    content: '<:orphmoji_scared:1419238538653728808> Your API key is invalid. Please set it again with /setup.',
                 });
             }
             throw new Error(`API request failed with status ${mailResponse.status}`);
@@ -42,7 +42,7 @@ export async function execute(interaction, pool) {
 
         if (!packages || packages.length === 0) {
             return interaction.editReply({
-                content: 'You have no packages.',
+                content: '<:mopartsmoproblems:1419234881921220768> You have no packages.',
             });
         }
 
@@ -128,7 +128,7 @@ export async function execute(interaction, pool) {
                 });
 
                 if (!packageResponse.ok) {
-                    await i.followUp({ content: 'Failed to fetch package details.', ephemeral: true });
+                    await i.followUp({ content: '<:sad:1419239776049168528> Failed to fetch package details.', ephemeral: true });
                     return;
                 }
 
@@ -150,7 +150,7 @@ export async function execute(interaction, pool) {
 
             } catch (error) {
                 console.error('Failed to fetch package details:', error);
-                await i.followUp({ content: 'An error occurred while fetching package details.', ephemeral: true });
+                await i.followUp({ content: '<:orphmoji_peefest:1419239875894579311> An error occurred while fetching package details.', ephemeral: true });
             }
         });
 
@@ -165,7 +165,7 @@ export async function execute(interaction, pool) {
     } catch (error) {
         console.error(error);
         await interaction.editReply({
-            content: 'An error occurred while fetching your packages.',
+            content: '<:orphmoji_peefest:1419239875894579311> An error occurred while fetching your packages.',
         });
     }
 }
