@@ -174,11 +174,26 @@ export async function execute(interaction, pool) {
                     .setTitle(formatted.embed)
                     .setURL(letter.public_url)
                     .setColor(0xec3750)
-                    .setDescription(`⚡ **Status:** ${letter.status}\n🏷️ **Tags:** ${letter.tags.join(', ') || 'None'}`)
-                    .addFields({ name: '📅  Events', value: events.map(event => {
-                        const timestamp = Math.floor(new Date(event.happened_at).getTime() / 1000);
-                        return `**${event.description}**\n📌 ${event.location ? `*${event.location}*` : ''}\n⌚ <t:${timestamp}:R> (<t:${timestamp}:F>)`;
-                    }).join('\n\n')});
+                    .setDescription(`⚡ **Status:** ${letter.status}\n🏷️ **Tags:** ${letter.tags.join(', ') || 'None'}`);
+
+                let eventFieldValue = '';
+                const eventFields = [];
+
+                for (const event of events) {
+                    const timestamp = Math.floor(new Date(event.happened_at).getTime() / 1000);
+                    const eventString = `**${event.description}**\n📌 ${event.location ? `*${event.location}*` : ''}\n⌚ <t:${timestamp}:R> (<t:${timestamp}:F>)\n\n`;
+
+                    if (eventFieldValue.length + eventString.length > 1024) {
+                        eventFields.push(eventFieldValue);
+                        eventFieldValue = '';
+                    }
+                    eventFieldValue += eventString;
+                }
+                eventFields.push(eventFieldValue);
+
+                for (let i = 0; i < eventFields.length; i++) {
+                    detailEmbed.addFields({ name: i === 0 ? '📅  Events' : '\u200B', value: eventFields[i] });
+                }
 
                 await i.followUp({ embeds: [detailEmbed], ephemeral: true });
 
