@@ -33,24 +33,41 @@ export async function execute(interaction, pool) {
         const letters = mailData.mail.filter(item => item.type === 'letter');
         const packages = mailData.mail.filter(item => item.type === 'package');
 
-        const deliveredLetters = letters.filter(l => ['delivered', 'received'].includes(l.status)).length;
-        const deliveredPackages = packages.filter(p => ['delivered', 'received'].includes(p.status)).length;
+        const deliveredLetters = letters.filter(l => ['delivered', 'received'].includes(l.status));
+        const deliveredPackages = packages.filter(p => ['delivered', 'received'].includes(p.status));
 
-        const avgDeliveryTime = (items) => {
-            const deliveredItems = items.filter(item => ['delivered', 'received'].includes(item.status) && item.events && item.events.length > 1);
-            if (deliveredItems.length === 0) return 'N/A';
+        const avgDeliveryTime = async (items) => {
+            if (items.length === 0) return 'N/A';
             
-            const totalDuration = deliveredItems.reduce((acc, item) => {
-                const created = new Date(item.created_at);
-                const deliveredEvent = item.events.find(e => e.description.toLowerCase().includes('delivered'));
-                if (deliveredEvent) {
-                    const delivered = new Date(deliveredEvent.happened_at);
-                    return acc + (delivered.getTime() - created.getTime());
-                }
-                return acc;
-            }, 0);
+            let totalDuration = 0;
+            let count = 0;
 
-            const avgDuration = totalDuration / deliveredItems.length;
+            for (const item of items) {
+                try {
+                    const itemResponse = await fetch(`https://mail.hackclub.com/api/public/v1/${item.type}s/${item.id}`, {
+                        headers: { 'Authorization': `Bearer ${apiKey}` }
+                    });
+                    if (!itemResponse.ok) continue;
+
+                    const details = await itemResponse.json();
+                    const fullItem = details[item.type];
+
+                    const created = new Date(fullItem.created_at);
+                    const deliveredEvent = fullItem.events.find(e => e.description.toLowerCase().includes('delivered') || e.description.toLowerCase().includes('received'));
+                    
+                    if (deliveredEvent) {
+                        const delivered = new Date(deliveredEvent.happened_at);
+                        totalDuration += delivered.getTime() - created.getTime();
+                        count++;
+                    }
+                } catch (e) {
+                    console.error(`Failed to fetch details for ${item.id}`, e);
+                }
+            }
+
+            if (count === 0) return 'N/A';
+
+            const avgDuration = totalDuration / count;
             const days = Math.floor(avgDuration / (1000 * 60 * 60 * 24));
             return `${days} days`;
         };
@@ -60,11 +77,11 @@ export async function execute(interaction, pool) {
             .setColor(0xec3750)
             .addFields(
                 { name: 'Total Letters', value: letters.length.toString(), inline: true },
-                { name: 'Delivered Letters', value: deliveredLetters.toString(), inline: true },
-                { name: 'Avg. Letter Delivery Time', value: avgDeliveryTime(letters), inline: true },
+                { name: 'Delivered Letters', value: deliveredLetters.length.toString(), inline: true },
+                { name: 'Avg. Letter Delivery Time', value: await avgDeliveryTime(deliveredLetters), inline: true },
                 { name: 'Total Packages', value: packages.length.toString(), inline: true },
-                { name: 'Delivered Packages', value: deliveredPackages.toString(), inline: true },
-                { name: 'Avg. Package Delivery Time', value: avgDeliveryTime(packages), inline: true }
+                { name: 'Delivered Packages', value: deliveredPackages.length.toString(), inline: true },
+                { name: 'Avg. Package Delivery Time', value: await avgDeliveryTime(deliveredPackages), inline: true }
             );
 
         await interaction.editReply({ embeds: [statsEmbed] });
