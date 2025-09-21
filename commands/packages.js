@@ -56,9 +56,10 @@ export async function execute(interaction, pool) {
             const currentItems = packages.slice(start, end);
 
             const embed = new EmbedBuilder()
-                .setTitle('Your Hack Club Packages')
+                .setTitle('<:orphmoji_yippee:1419235231315001414> Your Hack Club Packages')
                 .setColor(0xec3750)
-                .setFooter({ text: `Page ${page + 1} of ${totalPages} | Showing ${currentItems.length} of ${packages.length} packages.` });
+                .setFooter({ text: `Page ${page + 1} of ${totalPages} | Showing ${currentItems.length} of ${packages.length} packages.` })
+                .setThumbnail('https://em-content.zobj.net/source/apple/419/package_1f4e6.png');
 
             const selectMenu = new StringSelectMenuBuilder()
                 .setCustomId('select_package')

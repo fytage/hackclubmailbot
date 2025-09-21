@@ -56,7 +56,7 @@ export async function execute(interaction, pool) {
             const currentItems = letters.slice(start, end);
 
             const embed = new EmbedBuilder()
-                .setTitle('✉️ Your Hack Club Letters')
+                .setTitle('<:orphmoji_yippee:1419235231315001414> Your Hack Club Letters')
                 .setColor(0xec3750)
                 .setFooter({ text: `Page ${page + 1} of ${totalPages} | Showing ${currentItems.length} of ${letters.length} letters.` })
                 .setThumbnail('https://em-content.zobj.net/source/apple/419/envelope_2709-fe0f.png');
