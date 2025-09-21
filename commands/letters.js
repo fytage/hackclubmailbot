@@ -84,13 +84,13 @@ export async function execute(interaction, pool) {
                 .addComponents(
                     new ButtonBuilder()
                         .setCustomId('prev_page')
-                        .setLabel('')
+                        .setLabel(' ')
                         .setEmoji('⬅️')
                         .setStyle(ButtonStyle.Primary)
                         .setDisabled(page === 0),
                     new ButtonBuilder()
                         .setCustomId('next_page')
-                        .setLabel('')
+                        .setLabel(' ')
                         .setEmoji('➡️')
                         .setStyle(ButtonStyle.Primary)
                         .setDisabled(page >= totalPages - 1)
