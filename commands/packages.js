@@ -3,7 +3,11 @@ import fetch from 'node-fetch';
 
 export const data = new SlashCommandBuilder()
     .setName('packages')
-    .setDescription('Check your Hack Club packages.');
+    .setDescription('Check your Hack Club packages.')
+    .addStringOption(option =>
+        option.setName('query')
+            .setDescription('Search for packages by title.')
+            .setRequired(false));
 
 export async function execute(interaction, pool) {
     const formatTitle = (title) => {
@@ -55,7 +59,12 @@ export async function execute(interaction, pool) {
         }
 
         const mailData = await mailResponse.json();
-        const packages = mailData.mail.filter(item => item.type === 'package');
+        let packages = mailData.mail.filter(item => item.type === 'package');
+
+        const query = interaction.options.getString('query');
+        if (query) {
+            packages = packages.filter(pkg => pkg.title && pkg.title.toLowerCase().includes(query.toLowerCase()));
+        }
 
         if (!packages || packages.length === 0) {
             return interaction.editReply({

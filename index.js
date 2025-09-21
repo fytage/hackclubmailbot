@@ -1,21 +1,10 @@
 import 'dotenv/config';
-import { Client, GatewayIntentBits, Collection, Events } from 'discord.js';
-import { promises as fs } from 'fs';
+import { Client, GatewayIntentBits, Collection } from 'discord.js';
+import fs from 'fs';
 import path from 'path';
-import { fileURLToPath } from 'url';
 import pool from './db.js';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-try {
-        console.log('Running register.js to update commands...');
-        await import('./register.js');
-        console.log('register.js completed successfully.');
-    } catch (error) {
-        console.error('CRITICAL: Error running register.js. The bot will not start.', error);
-        process.exit(1);
-    }
+import fetch from 'node-fetch';
+import { EmbedBuilder } from 'discord.js';
 
 const client = new Client({ intents: [GatewayIntentBits.Guilds] });
 
@@ -34,31 +23,53 @@ for (const file of commandFiles) {
     }
 }
 
-client.once(Events.ClientReady, c => {
-    console.log(`Ready! Logged in as ${c.user.tag}`);
+client.once('ready', () => {
+    console.log('Bot is online!');
+    setInterval(checkMailUpdates, 20 * 60 * 1000); // 20 minutes
 });
 
-client.on(Events.InteractionCreate, async interaction => {
-    if (!interaction.isChatInputCommand()) return;
-
-    const command = interaction.client.commands.get(interaction.commandName);
-
-    if (!command) {
-        console.error(`No command matching ${interaction.commandName} was found.`);
-        return;
-    }
-
+async function checkMailUpdates() {
     try {
-        await command.execute(interaction, pool);
-    } catch (error) {
-        console.error(error);
-        if (interaction.replied || interaction.deferred) {
-            await interaction.followUp({ content: 'There was an error while executing this command!', ephemeral: true });
-        } else {
-            await interaction.reply({ content: 'There was an error while executing this command!', ephemeral: true });
-        }
-    }
-});
+        const [users] = await pool.execute('SELECT * FROM users WHERE notifications_enabled = 1');
+        if (users.length === 0) return;
 
+        for (const user of users) {
+            const mailResponse = await fetch('https://mail.hackclub.com/api/public/v1/mail', {
+                headers: { 'Authorization': `Bearer ${user.api_key}` }
+            });
+
+            if (!mailResponse.ok) continue;
+
+            const mailData = await mailResponse.json();
+            const recentMail = mailData.mail.filter(item => new Date(item.updated_at) > new Date(user.last_checked));
+
+            if (recentMail.length > 0) {
+                const userDiscord = await client.users.fetch(user.discord_id);
+                if (!userDiscord) continue;
+
+                for (const item of recentMail) {
+                    const itemResponse = await fetch(`https://mail.hackclub.com/api/public/v1/${item.type}s/${item.id}`, {
+                        headers: { 'Authorization': `Bearer ${user.api_key}` }
+                    });
+                    if(!itemResponse.ok) continue;
+                    const itemDetails = await itemResponse.json();
+                    const latestEvent = itemDetails[item.type].events.sort((a, b) => new Date(b.happened_at) - new Date(a.happened_at))[0];
+
+                    const updateEmbed = new EmbedBuilder()
+                        .setTitle(`<:orphmoji_scared:1419238538653728808> Update for your ${item.type}: ${item.title || 'Untitled'}`)
+                        .setURL(item.public_url)
+                        .setColor(0xec3750)
+                        .setDescription(`🗓️ **New Event:** ${latestEvent.description}\n📌 **Location:** ${latestEvent.location || 'N/A'}`)
+                        .setTimestamp(new Date(latestEvent.happened_at));
+                    
+                    await userDiscord.send({ embeds: [updateEmbed] });
+                }
+            }
+            await pool.execute('UPDATE users SET last_checked = CURRENT_TIMESTAMP WHERE id = ?', [user.id]);
+        }
+    } catch (error) {
+        console.error('Error checking mail updates:', error);
+    }
+}
 
 client.login(process.env.DISCORD_TOKEN);

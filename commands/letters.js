@@ -3,7 +3,11 @@ import fetch from 'node-fetch';
 
 export const data = new SlashCommandBuilder()
     .setName('letters')
-    .setDescription('Check your Hack Club letters.');
+    .setDescription('Check your Hack Club letters.')
+    .addStringOption(option =>
+        option.setName('query')
+            .setDescription('Search for letters by title.')
+            .setRequired(false));
 
 export async function execute(interaction, pool) {
     const formatTitle = (title) => {
@@ -55,7 +59,12 @@ export async function execute(interaction, pool) {
         }
 
         const mailData = await mailResponse.json();
-        const letters = mailData.mail.filter(item => item.type === 'letter');
+        let letters = mailData.mail.filter(item => item.type === 'letter');
+
+        const query = interaction.options.getString('query');
+        if (query) {
+            letters = letters.filter(letter => letter.title && letter.title.toLowerCase().includes(query.toLowerCase()));
+        }
 
         if (!letters || letters.length === 0) {
             return interaction.editReply({

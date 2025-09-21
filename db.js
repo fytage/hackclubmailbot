@@ -22,6 +22,8 @@ async function setupDatabase() {
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 discord_id VARCHAR(255) NOT NULL UNIQUE,
                 api_key VARCHAR(255) NOT NULL,
+                notifications_enabled BOOLEAN DEFAULT 0,
+                last_checked TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         `);
