@@ -42,7 +42,7 @@ export async function execute(interaction, pool) {
 
         if (!letters || letters.length === 0) {
             return interaction.editReply({
-                content: 'You have no letters.',
+                content: '<:mopartsmoproblems:1419234881921220768> You have no letters.',
             });
         }
 
