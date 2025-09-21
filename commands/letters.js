@@ -144,10 +144,10 @@ export async function execute(interaction, pool) {
                     .setTitle(letter.title || 'Untitled Letter')
                     .setURL(letter.public_url)
                     .setColor(0xec3750)
-                    .setDescription(`**Status:** ${letter.status}\n**Tags:** ${letter.tags.join(', ') || 'None'}`)
-                    .addFields({ name: 'Events', value: events.map(event => {
+                    .setDescription(`⚡ **Status:** ${letter.status}\n🏷️ **Tags:** ${letter.tags.join(', ') || 'None'}`)
+                    .addFields({ name: '📅 Events', value: events.map(event => {
                         const timestamp = Math.floor(new Date(event.happened_at).getTime() / 1000);
-                        return `**${event.description}**\n${event.location ? `*${event.location}*` : ''}\n<t:${timestamp}:R> (<t:${timestamp}:F>)`;
+                        return `**${event.description}**\n📌 ${event.location ? `*${event.location}*` : ''}\n⌚ <t:${timestamp}:R> (<t:${timestamp}:F>)`;
                     }).join('\n\n')});
 
                 await i.followUp({ embeds: [detailEmbed], ephemeral: true });
