@@ -10,21 +10,21 @@ export const data = new SlashCommandBuilder()
             .setRequired(false));
 
 export async function execute(interaction, pool) {
-    const formatTitle = (title) => {
+    const formatItem = (title) => {
         const lowerCaseTitle = (title || 'Untitled').toLowerCase();
         if (lowerCaseTitle === 'untitled') {
-            return '<:mopartsmoproblems:1419234881921220768> Untitled';
+            return { title: 'Untitled Package', embed: '<:mopartsmoproblems:1419234881921220768> Untitled Package', emoji: '1419234881921220768' };
         }
-        if (lowerCaseTitle === 'summer of making free stickers!') {
-            return `<:SOM:1419246038736175226> ${title}`;
+        if (lowerCaseTitle.includes('summer of making')) {
+            return { title, embed: `<:SOM:1419246038736175226> ${title}`, emoji: '1419246038736175226' };
         }
-        if (lowerCaseTitle === 'sinkening balloons!') {
-            return `🎈 ${title}`;
+        if (lowerCaseTitle.includes('sinkening balloons')) {
+            return { title, embed: `🎈 ${title}`, emoji: '🎈' };
         }
-        if (lowerCaseTitle === 'daydream stickers') {
-            return `<:daydream:1419248040400912474> ${title}`;
+        if (lowerCaseTitle.includes('daydream stickers')) {
+            return { title, embed: `<:daydream:1419248040400912474> ${title}`, emoji: '1419248040400912474' };
         }
-        return title;
+        return { title: title || 'Untitled Package', embed: title || 'Untitled Package', emoji: '📦' };
     };
 
     const userId = interaction.user.id;
@@ -90,15 +90,19 @@ export async function execute(interaction, pool) {
             const selectMenu = new StringSelectMenuBuilder()
                 .setCustomId('select_package')
                 .setPlaceholder('Select a package to view details')
-                .addOptions(currentItems.map(item => ({
-                    label: formatTitle(item.title || 'Untitled Package').substring(0, 100),
-                    description: `Status: ${item.status}`,
-                    value: item.id,
-                })));
+                .addOptions(currentItems.map(item => {
+                    const formatted = formatItem(item.title);
+                    return {
+                        label: formatted.title.substring(0, 100),
+                        description: `Status: ${item.status}`,
+                        value: item.id,
+                        emoji: formatted.emoji,
+                    }
+                }));
             
             currentItems.forEach(item => {
                 embed.addFields({
-                    name: formatTitle(item.title || 'Untitled Package'),
+                    name: formatItem(item.title).embed,
                     value: `**Status:** ${item.status}\n**Created:** ${new Date(item.created_at).toLocaleDateString()}\n[View Online](${item.public_url})`,
                     inline: false
                 });
@@ -160,11 +164,12 @@ export async function execute(interaction, pool) {
                 }
 
                 const { package: packageData } = await packageResponse.json();
+                const formatted = formatItem(packageData.title);
 
                 const events = packageData.events.sort((a, b) => new Date(b.happened_at) - new Date(a.happened_at));
 
                 const detailEmbed = new EmbedBuilder()
-                    .setTitle(formatTitle(packageData.title || 'Untitled Package'))
+                    .setTitle(formatted.embed)
                     .setURL(packageData.public_url)
                     .setColor(0xec3750)
                     .setDescription(`⚡ **Status:** ${packageData.status}\n🏷️ **Tags:** ${packageData.tags.join(', ') || 'None'}`)
