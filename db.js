@@ -30,16 +30,21 @@ async function setupDatabase() {
         console.log('`users` table is ready.');
 
         // Add columns if they don't exist
-        const [columns] = await connection.execute("SHOW COLUMNS FROM `users` LIKE 'notifications_enabled'");
-        if (columns.length === 0) {
-            await connection.execute('ALTER TABLE `users` ADD `notifications_enabled` BOOLEAN DEFAULT 0');
-            console.log('Added `notifications_enabled` column.');
-        }
+        const columns = [
+            { name: 'notifications_enabled', type: 'BOOLEAN DEFAULT 0' },
+            { name: 'last_checked', type: 'TIMESTAMP DEFAULT CURRENT_TIMESTAMP' },
+            { name: 'notify_new', type: 'BOOLEAN DEFAULT 1' },
+            { name: 'notify_transit', type: 'BOOLEAN DEFAULT 1' },
+            { name: 'notify_delivered', type: 'BOOLEAN DEFAULT 1' },
+            { name: 'notify_failed', type: 'BOOLEAN DEFAULT 1' }
+        ];
 
-        const [lastCheckedColumns] = await connection.execute("SHOW COLUMNS FROM `users` LIKE 'last_checked'");
-        if (lastCheckedColumns.length === 0) {
-            await connection.execute('ALTER TABLE `users` ADD `last_checked` TIMESTAMP DEFAULT CURRENT_TIMESTAMP');
-            console.log('Added `last_checked` column.');
+        for (const col of columns) {
+            const [columnExists] = await connection.execute(`SHOW COLUMNS FROM \`users\` LIKE '${col.name}'`);
+            if (columnExists.length === 0) {
+                await connection.execute(`ALTER TABLE \`users\` ADD \`${col.name}\` ${col.type}`);
+                console.log(`Added \`${col.name}\` column.`);
+            }
         }
         
         connection.release();

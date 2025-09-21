@@ -69,9 +69,6 @@ async function checkMailUpdates() {
             const recentMail = mailData.mail.filter(item => new Date(item.updated_at) > new Date(user.last_checked));
 
             if (recentMail.length > 0) {
-                const userDiscord = await client.users.fetch(user.discord_id);
-                if (!userDiscord) continue;
-
                 for (const item of recentMail) {
                     const itemResponse = await fetch(`https://mail.hackclub.com/api/public/v1/${item.type}s/${item.id}`, {
                         headers: { 'Authorization': `Bearer ${user.api_key}` }
@@ -79,6 +76,15 @@ async function checkMailUpdates() {
                     if(!itemResponse.ok) continue;
                     const itemDetails = await itemResponse.json();
                     const latestEvent = itemDetails[item.type].events.sort((a, b) => new Date(b.happened_at) - new Date(a.happened_at))[0];
+                    
+                    const status = item.status.toLowerCase();
+                    const shouldNotify = 
+                        (user.notify_new && (status === 'registered' || status === 'queued')) ||
+                        (user.notify_transit && status.includes('transit')) ||
+                        (user.notify_delivered && (status === 'delivered' || status === 'received')) ||
+                        (user.notify_failed && status.includes('failed'));
+
+                    if (!shouldNotify) continue;
 
                     const updateEmbed = new EmbedBuilder()
                         .setTitle(`<:orphmoji_scared:1419238538653728808> Update for your ${item.type}: ${item.title || 'Untitled'}`)
