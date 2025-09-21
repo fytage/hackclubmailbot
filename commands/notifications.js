@@ -18,10 +18,10 @@ export async function execute(interaction, pool) {
 
         const generateComponents = (currentUser) => {
             const settings = [
-                { id: 'notify_new', label: 'New Mail', description: 'Notify when new mail is registered.', value: currentUser.notify_new },
-                { id: 'notify_transit', label: 'In Transit', description: 'Notify when mail is in transit.', value: currentUser.notify_transit },
-                { id: 'notify_delivered', label: 'Delivered', description: 'Notify when mail is delivered/received.', value: currentUser.notify_delivered },
-                { id: 'notify_failed', label: 'Failed Delivery', description: 'Notify when a delivery fails.', value: currentUser.notify_failed }
+                { id: 'notify_new_letter', label: 'New Letters', description: 'Notify when a new letter is registered.', value: currentUser.notify_new_letter },
+                { id: 'notify_letter_update', label: 'Letter Updates', description: "Notify when a letter's status changes.", value: currentUser.notify_letter_update },
+                { id: 'notify_new_package', label: 'New Packages', description: 'Notify when a new package is registered.', value: currentUser.notify_new_package },
+                { id: 'notify_package_update', label: 'Package Updates', description: "Notify when a package's status changes.", value: currentUser.notify_package_update }
             ];
 
             const embed = new EmbedBuilder()
@@ -44,9 +44,7 @@ export async function execute(interaction, pool) {
             
             const row = new ActionRowBuilder().addComponents(selectMenu);
             return { embeds: [embed], components: [row] };
-        };
-
-        const message = await interaction.reply({ ...generateComponents(user), ephemeral: true });
+        };        const message = await interaction.reply({ ...generateComponents(user), ephemeral: true });
 
         const collector = message.createMessageComponentCollector({
             componentType: ComponentType.StringSelect,

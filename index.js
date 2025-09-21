@@ -70,6 +70,20 @@ async function checkMailUpdates() {
 
             if (recentMail.length > 0) {
                 for (const item of recentMail) {
+                    const isNew = new Date(item.created_at) > new Date(user.last_checked);
+                    const isUpdate = !isNew;
+
+                    let shouldNotify = false;
+                    if (item.type === 'letter') {
+                        if (isNew && user.notify_new_letter) shouldNotify = true;
+                        if (isUpdate && user.notify_letter_update) shouldNotify = true;
+                    } else if (item.type === 'package') {
+                        if (isNew && user.notify_new_package) shouldNotify = true;
+                        if (isUpdate && user.notify_package_update) shouldNotify = true;
+                    }
+
+                    if (!shouldNotify) continue;
+
                     const itemResponse = await fetch(`https://mail.hackclub.com/api/public/v1/${item.type}s/${item.id}`, {
                         headers: { 'Authorization': `Bearer ${user.api_key}` }
                     });
@@ -78,13 +92,13 @@ async function checkMailUpdates() {
                     const latestEvent = itemDetails[item.type].events.sort((a, b) => new Date(b.happened_at) - new Date(a.happened_at))[0];
                     
                     const status = item.status.toLowerCase();
-                    const shouldNotify = 
+                    const shouldNotifyStatus = 
                         (user.notify_new && (status === 'registered' || status === 'queued')) ||
                         (user.notify_transit && status.includes('transit')) ||
                         (user.notify_delivered && (status === 'delivered' || status === 'received')) ||
                         (user.notify_failed && status.includes('failed'));
 
-                    if (!shouldNotify) continue;
+                    if (!shouldNotifyStatus) continue;
 
                     const updateEmbed = new EmbedBuilder()
                         .setTitle(`<:orphmoji_scared:1419238538653728808> Update for your ${item.type}: ${item.title || 'Untitled'}`)

@@ -33,10 +33,10 @@ async function setupDatabase() {
         const columns = [
             { name: 'notifications_enabled', type: 'BOOLEAN DEFAULT 0' },
             { name: 'last_checked', type: 'TIMESTAMP DEFAULT CURRENT_TIMESTAMP' },
-            { name: 'notify_new', type: 'BOOLEAN DEFAULT 1' },
-            { name: 'notify_transit', type: 'BOOLEAN DEFAULT 1' },
-            { name: 'notify_delivered', type: 'BOOLEAN DEFAULT 1' },
-            { name: 'notify_failed', type: 'BOOLEAN DEFAULT 1' }
+            { name: 'notify_new_letter', type: 'BOOLEAN DEFAULT 1' },
+            { name: 'notify_letter_update', type: 'BOOLEAN DEFAULT 1' },
+            { name: 'notify_new_package', type: 'BOOLEAN DEFAULT 1' },
+            { name: 'notify_package_update', type: 'BOOLEAN DEFAULT 1' }
         ];
 
         for (const col of columns) {
