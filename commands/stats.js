@@ -33,11 +33,11 @@ export async function execute(interaction, pool) {
         const letters = mailData.mail.filter(item => item.type === 'letter');
         const packages = mailData.mail.filter(item => item.type === 'package');
 
-        const deliveredLetters = letters.filter(l => l.status === 'delivered').length;
-        const deliveredPackages = packages.filter(p => p.status === 'delivered').length;
+        const deliveredLetters = letters.filter(l => ['delivered', 'received'].includes(l.status)).length;
+        const deliveredPackages = packages.filter(p => ['delivered', 'received'].includes(p.status)).length;
 
         const avgDeliveryTime = (items) => {
-            const deliveredItems = items.filter(item => item.status === 'delivered' && item.events && item.events.length > 1);
+            const deliveredItems = items.filter(item => ['delivered', 'received'].includes(item.status) && item.events && item.events.length > 1);
             if (deliveredItems.length === 0) return 'N/A';
             
             const totalDuration = deliveredItems.reduce((acc, item) => {
