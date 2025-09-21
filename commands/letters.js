@@ -6,6 +6,23 @@ export const data = new SlashCommandBuilder()
     .setDescription('Check your Hack Club letters.');
 
 export async function execute(interaction, pool) {
+    const formatTitle = (title) => {
+        const lowerCaseTitle = (title || 'Untitled').toLowerCase();
+        if (lowerCaseTitle === 'untitled') {
+            return '<:mopartsmoproblems:1419234881921220768> Untitled';
+        }
+        if (lowerCaseTitle === 'summer of making free stickers!') {
+            return `<:SOM:1419246038736175226> ${title}`;
+        }
+        if (lowerCaseTitle === 'sinkening balloons!') {
+            return `🎈 ${title}`;
+        }
+        if (lowerCaseTitle === 'daydream stickers') {
+            return `<:daydream:1419248040400912474> ${title}`;
+        }
+        return title;
+    };
+
     const userId = interaction.user.id;
 
     try {
@@ -65,7 +82,7 @@ export async function execute(interaction, pool) {
                 .setCustomId('select_letter')
                 .setPlaceholder('Select a letter to view details')
                 .addOptions(currentItems.map(item => ({
-                    label: item.title || 'Untitled',
+                    label: formatTitle(item.title).substring(0, 100),
                     description: `Status: ${item.status}`,
                     value: item.id,
                     emoji: '✉️',
@@ -73,7 +90,7 @@ export async function execute(interaction, pool) {
 
             currentItems.forEach(item => {
                 embed.addFields({
-                    name: item.title || 'Untitled',
+                    name: formatTitle(item.title) || 'Untitled',
                     value: `**Status:** ${item.status}\n**Created:** ${new Date(item.created_at).toLocaleDateString()}\n[View Online](${item.public_url})`,
                     inline: false
                 });
@@ -141,11 +158,11 @@ export async function execute(interaction, pool) {
                 const events = letter.events.sort((a, b) => new Date(b.happened_at) - new Date(a.happened_at));
 
                 const detailEmbed = new EmbedBuilder()
-                    .setTitle(letter.title || 'Untitled Letter')
+                    .setTitle(formatTitle(letter.title))
                     .setURL(letter.public_url)
                     .setColor(0xec3750)
                     .setDescription(`⚡ **Status:** ${letter.status}\n🏷️ **Tags:** ${letter.tags.join(', ') || 'None'}`)
-                    .addFields({ name: '📅 Events', value: events.map(event => {
+                    .addFields({ name: '📅  Events', value: events.map(event => {
                         const timestamp = Math.floor(new Date(event.happened_at).getTime() / 1000);
                         return `**${event.description}**\n📌 ${event.location ? `*${event.location}*` : ''}\n⌚ <t:${timestamp}:R> (<t:${timestamp}:F>)`;
                     }).join('\n\n')});
