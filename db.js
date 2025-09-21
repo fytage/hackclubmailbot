@@ -28,6 +28,19 @@ async function setupDatabase() {
             )
         `);
         console.log('`users` table is ready.');
+
+        // Add columns if they don't exist
+        const [columns] = await connection.execute("SHOW COLUMNS FROM `users` LIKE 'notifications_enabled'");
+        if (columns.length === 0) {
+            await connection.execute('ALTER TABLE `users` ADD `notifications_enabled` BOOLEAN DEFAULT 0');
+            console.log('Added `notifications_enabled` column.');
+        }
+
+        const [lastCheckedColumns] = await connection.execute("SHOW COLUMNS FROM `users` LIKE 'last_checked'");
+        if (lastCheckedColumns.length === 0) {
+            await connection.execute('ALTER TABLE `users` ADD `last_checked` TIMESTAMP DEFAULT CURRENT_TIMESTAMP');
+            console.log('Added `last_checked` column.');
+        }
         
         connection.release();
     } catch (error) {
