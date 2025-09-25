@@ -59,6 +59,13 @@ async function checkMailUpdates() {
         if (users.length === 0) return;
 
         for (const user of users) {
+            // Fetch the Discord user object
+            const userDiscord = await client.users.fetch(user.discord_id);
+            if (!userDiscord) {
+                console.warn(`Could not find Discord user with ID: ${user.discord_id}`);
+                continue; // Skip to the next user if Discord user not found
+            }
+
             const mailResponse = await fetch('https://mail.hackclub.com/api/public/v1/mail', {
                 headers: { 'Authorization': `Bearer ${user.api_key}` }
             });
@@ -107,6 +114,7 @@ async function checkMailUpdates() {
                         .setDescription(`🗓️ **New Event:** ${latestEvent.description}\n📌 **Location:** ${latestEvent.location || 'N/A'}`)
                         .setTimestamp(new Date(latestEvent.happened_at));
                     
+                    // Send the message to the fetched user
                     await userDiscord.send({ embeds: [updateEmbed] });
                 }
             }
