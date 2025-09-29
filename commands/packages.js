@@ -1,4 +1,4 @@
-import { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, StringSelectMenuBuilder, ButtonBuilder, ButtonStyle, ComponentType } from 'discord.js';
+import { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, ComponentType } from 'discord.js';
 import fetch from 'node-fetch';
 
 export const data = new SlashCommandBuilder()
@@ -88,19 +88,6 @@ export async function execute(interaction, pool) {
                 .setFooter({ text: `Page ${page + 1} of ${totalPages} | Showing ${currentItems.length} of ${packages.length} packages.` })
                 .setThumbnail('https://em-content.zobj.net/source/apple/419/package_1f4e6.png');
 
-            const selectMenu = new StringSelectMenuBuilder()
-                .setCustomId('select_package')
-                .setPlaceholder('Select a package to view details')
-                .addOptions(currentItems.map(item => {
-                    const formatted = formatItem(item.title);
-                    return {
-                        label: formatted.title.substring(0, 100),
-                        description: `Status: ${item.status}`,
-                        value: item.id,
-                        emoji: formatted.emoji,
-                    }
-                }));
-            
             currentItems.forEach(item => {
                 let trackingInfo = '';
                 if (item.tracking_number && item.tracking_link) {
@@ -114,7 +101,6 @@ export async function execute(interaction, pool) {
                 });
             });
 
-            const row = new ActionRowBuilder().addComponents(selectMenu);
             const buttons = new ActionRowBuilder()
                 .addComponents(
                     new ButtonBuilder()
@@ -129,7 +115,7 @@ export async function execute(interaction, pool) {
                         .setDisabled(page >= totalPages - 1)
                 );
 
-            return { embeds: [embed], components: [row, buttons] };
+            return { embeds: [embed], components: [buttons] };
         };
 
         const message = await interaction.editReply(generateComponents(currentPage, packages));
@@ -147,82 +133,6 @@ export async function execute(interaction, pool) {
             }
 
             await i.update(generateComponents(currentPage, packages));
-        });
-
-        const selectCollector = message.createMessageComponentCollector({
-            componentType: ComponentType.StringSelect,
-            time: 600000,
-        });
-
-        selectCollector.on('collect', async i => {
-            const packageId = i.values[0];
-            
-            await i.deferUpdate();
-
-            try {
-                const packageResponse = await fetch(`https://mail.hackclub.com/api/public/v1/packages/${packageId}`, {
-                    // FIX APPLIED HERE: Passing the API key in the headers
-                    headers: { 'Authorization': `Bearer ${apiKey}` }
-                });
-
-                // Add robust error handling in case the API key is missing or invalid for this endpoint.
-                if (!packageResponse.ok) {
-                    if (packageResponse.status === 401 || packageResponse.status === 403) {
-                         await i.followUp({ content: '<:orphmoji_scared:1419238538653728808> Authorization failed for package details. Your API key might be missing permissions.', ephemeral: true });
-                         return;
-                    }
-                    await i.followUp({ content: `<:sad:1419239776049168528> Failed to fetch package details. Status: ${packageResponse.status}`, ephemeral: true });
-                    return;
-                }
-
-                const { package: packageData } = await packageResponse.json();
-                const formatted = formatItem(packageData.title);
-
-                const events = packageData.events.sort((a, b) => new Date(b.happened_at) - new Date(a.happened_at));
-
-                let description = `⚡ **Status:** ${packageData.status}\n🏷️ **Tags:** ${packageData.tags.join(', ') || 'None'}`;
-                
-                if (packageData.tracking_number) {
-                    description += `\n\n**Tracking Details:**\n`;
-                    description += `📦 **Carrier:** ${packageData.carrier || 'N/A'}\n`;
-                    description += `🔢 **Number:** \`${packageData.tracking_number}\`\n`;
-                    if (packageData.tracking_link) {
-                        description += `🔗 **Link:** [Track Package Online](${packageData.tracking_link})`;
-                    }
-                }
-
-                const detailEmbed = new EmbedBuilder()
-                    .setTitle(formatted.embed)
-                    .setURL(packageData.public_url)
-                    .setColor(0xec3750)
-                    .setDescription(description);
-
-
-                let eventFieldValue = '';
-                const eventFields = [];
-
-                for (const event of events) {
-                    const timestamp = Math.floor(new Date(event.happened_at).getTime() / 1000);
-                    const eventString = `**${event.description}**\n📌 ${event.location ? `*${event.location}*` : ''}\n⌚ <t:${timestamp}:R> (<t:${timestamp}:F>)\n\n`;
-
-                    if (eventFieldValue.length + eventString.length > 1024) {
-                        eventFields.push(eventFieldValue);
-                        eventFieldValue = '';
-                    }
-                    eventFieldValue += eventString;
-                }
-                eventFields.push(eventFieldValue);
-
-                for (let i = 0; i < eventFields.length; i++) {
-                    detailEmbed.addFields({ name: i === 0 ? '📅  Events' : '\u200B', value: eventFields[i] });
-                }
-
-                await i.followUp({ embeds: [detailEmbed], ephemeral: true });
-
-            } catch (error) {
-                console.error('Failed to fetch package details:', error);
-                await i.followUp({ content: '<:orphmoji_peefest:1419239875894579311> An error occurred while fetching package details.', ephemeral: true });
-            }
         });
 
         collector.on('end', () => {
