@@ -43,7 +43,7 @@ export async function execute(interaction, pool) {
 
         await interaction.deferReply({ ephemeral: true });
 
-        const mailResponse = await fetch('https://mail.hackclub.com/api/public/v1/mail', {
+        const mailResponse = await fetch('https://mail.hackclub.com/api/public/v1/packages', {
             headers: {
                 'Authorization': `Bearer ${apiKey}`
             }
@@ -59,7 +59,8 @@ export async function execute(interaction, pool) {
         }
 
         const mailData = await mailResponse.json();
-        let packages = mailData.mail.filter(item => item.type === 'package');
+        
+        let packages = mailData.packages;
 
         const query = interaction.options.getString('query');
         if (query) {
@@ -101,9 +102,14 @@ export async function execute(interaction, pool) {
                 }));
             
             currentItems.forEach(item => {
+                let trackingInfo = '';
+                if (item.tracking_number && item.tracking_link) {
+                    trackingInfo = ` | **Tracking:** [${item.tracking_number}](${item.tracking_link}) (${item.carrier || 'N/A'})`;
+                }
+
                 embed.addFields({
                     name: formatItem(item.title).embed,
-                    value: `**Status:** ${item.status}\n**Created:** ${new Date(item.created_at).toLocaleDateString()}\n[View Online](${item.public_url})`,
+                    value: `**Status:** ${item.status}\n**Created:** ${new Date(item.created_at).toLocaleDateString()}${trackingInfo}\n[View Online](${item.public_url})`,
                     inline: false
                 });
             });
@@ -155,11 +161,17 @@ export async function execute(interaction, pool) {
 
             try {
                 const packageResponse = await fetch(`https://mail.hackclub.com/api/public/v1/packages/${packageId}`, {
+                    // FIX APPLIED HERE: Passing the API key in the headers
                     headers: { 'Authorization': `Bearer ${apiKey}` }
                 });
 
+                // Add robust error handling in case the API key is missing or invalid for this endpoint.
                 if (!packageResponse.ok) {
-                    await i.followUp({ content: '<:sad:1419239776049168528> Failed to fetch package details.', ephemeral: true });
+                    if (packageResponse.status === 401 || packageResponse.status === 403) {
+                         await i.followUp({ content: '<:orphmoji_scared:1419238538653728808> Authorization failed for package details. Your API key might be missing permissions.', ephemeral: true });
+                         return;
+                    }
+                    await i.followUp({ content: `<:sad:1419239776049168528> Failed to fetch package details. Status: ${packageResponse.status}`, ephemeral: true });
                     return;
                 }
 
@@ -168,11 +180,23 @@ export async function execute(interaction, pool) {
 
                 const events = packageData.events.sort((a, b) => new Date(b.happened_at) - new Date(a.happened_at));
 
+                let description = `⚡ **Status:** ${packageData.status}\n🏷️ **Tags:** ${packageData.tags.join(', ') || 'None'}`;
+                
+                if (packageData.tracking_number) {
+                    description += `\n\n**Tracking Details:**\n`;
+                    description += `📦 **Carrier:** ${packageData.carrier || 'N/A'}\n`;
+                    description += `🔢 **Number:** \`${packageData.tracking_number}\`\n`;
+                    if (packageData.tracking_link) {
+                        description += `🔗 **Link:** [Track Package Online](${packageData.tracking_link})`;
+                    }
+                }
+
                 const detailEmbed = new EmbedBuilder()
                     .setTitle(formatted.embed)
                     .setURL(packageData.public_url)
                     .setColor(0xec3750)
-                    .setDescription(`⚡ **Status:** ${packageData.status}\n🏷️ **Tags:** ${packageData.tags.join(', ') || 'None'}`);
+                    .setDescription(description);
+
 
                 let eventFieldValue = '';
                 const eventFields = [];
