@@ -90,7 +90,6 @@ async function checkMailUpdates() {
                     }
 
                     if (!shouldNotify) continue;
-
                     const itemResponse = await fetch(`https://mail.hackclub.com/api/public/v1/${item.type}s/${item.id}`, {
                         headers: { 'Authorization': `Bearer ${user.api_key}` }
                     });
