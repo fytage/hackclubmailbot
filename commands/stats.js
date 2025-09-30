@@ -31,7 +31,7 @@ export async function execute(interaction, pool) {
 
         const mailData = await mailResponse.json();
         const letters = mailData.mail.filter(item => item.type === 'letter');
-        const packages = mailData.mail.filter(item => item.type === 'package');
+        const packages = mailData.mail.filter(item => item.type === 'warehouse_order');
 
         const deliveredLetters = letters.filter(l => ['delivered', 'received'].includes(l.status));
         const deliveredPackages = packages.filter(p => ['delivered', 'received'].includes(p.status));
