@@ -50,7 +50,7 @@ client.on('interactionCreate', async interaction => {
 
 client.once('ready', () => {
     console.log('Bot is online!');
-    setInterval(checkMailUpdates, 20 * 60 * 1000); // 20 minutes
+    setInterval(checkMailUpdates, 20 * 60 * 1000);
 });
 
 async function checkMailUpdates() {
@@ -59,11 +59,10 @@ async function checkMailUpdates() {
         if (users.length === 0) return;
 
         for (const user of users) {
-            // Fetch the Discord user object
             const userDiscord = await client.users.fetch(user.discord_id);
             if (!userDiscord) {
                 console.warn(`Could not find Discord user with ID: ${user.discord_id}`);
-                continue; // Skip to the next user if Discord user not found
+                continue;
             }
 
             const mailResponse = await fetch('https://mail.hackclub.com/api/public/v1/mail', {
@@ -84,18 +83,24 @@ async function checkMailUpdates() {
                     if (item.type === 'letter') {
                         if (isNew && user.notify_new_letter) shouldNotify = true;
                         if (isUpdate && user.notify_letter_update) shouldNotify = true;
-                    } else if (item.type === 'package') {
+                    } else if (item.type === 'warehouse_order') {
                         if (isNew && user.notify_new_package) shouldNotify = true;
                         if (isUpdate && user.notify_package_update) shouldNotify = true;
                     }
 
                     if (!shouldNotify) continue;
-                    const itemResponse = await fetch(`https://mail.hackclub.com/api/public/v1/${item.type}s/${item.id}`, {
+
+                    let detailsType = item.type;
+                    if (item.type === 'warehouse_order') {
+                        detailsType = 'package';
+                    }
+
+                    const itemResponse = await fetch(`https://mail.hackclub.com/api/public/v1/${detailsType}s/${item.id}`, {
                         headers: { 'Authorization': `Bearer ${user.api_key}` }
                     });
                     if(!itemResponse.ok) continue;
                     const itemDetails = await itemResponse.json();
-                    const latestEvent = itemDetails[item.type].events.sort((a, b) => new Date(b.happened_at) - new Date(a.happened_at))[0];
+                    const latestEvent = itemDetails[detailsType].events.sort((a, b) => new Date(b.happened_at) - new Date(a.happened_at))[0];
                     
                     const status = item.status.toLowerCase();
                     const shouldNotifyStatus = 
@@ -113,7 +118,6 @@ async function checkMailUpdates() {
                         .setDescription(`🗓️ **New Event:** ${latestEvent.description}\n📌 **Location:** ${latestEvent.location || 'N/A'}`)
                         .setTimestamp(new Date(latestEvent.happened_at));
                     
-                    // Send the message to the fetched user
                     await userDiscord.send({ embeds: [updateEmbed] });
                 }
             }

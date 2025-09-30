@@ -96,7 +96,7 @@ export async function execute(interaction, pool) {
 
                 embed.addFields({
                     name: formatItem(item.title).embed,
-                    value: `**Status:** ${item.status}\n**Created:** ${new Date(item.created_at).toLocaleDateString()}${trackingInfo}\n[View Online](${item.public_url})`,
+                    value: `**Status:** ${item.status}\n**Created:** ${new Date(item.created_at).toLocaleDateString()}${trackingInfo}\n**Weight:** ${item.weight || 'N/A'}kg\n[View Online](${item.public_url})`,
                     inline: false
                 });
             });
